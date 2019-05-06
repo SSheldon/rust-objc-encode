@@ -106,6 +106,81 @@ pub fn eq_enc(s: &str, enc: &Encoding) -> bool {
     rm_enc_prefix(s, enc).map_or(false, str::is_empty)
 }
 
+enum EncodingToken<'a> {
+    Primitive(Encoding<'static>),
+    Pointer,
+    ArrayStart(u32),
+    ArrayEnd,
+    StructStart(&'a str),
+    StructEnd,
+    UnionStart(&'a str),
+    UnionEnd,
+}
+
+fn chomp(s: &str) -> Option<(EncodingToken, &str)> {
+    let (h, t) = {
+        let mut chars = s.chars();
+        match chars.next() {
+            Some(h) => (h, chars.as_str()),
+            None => return None,
+        }
+    };
+
+    let primitive = match h {
+        'c' => Encoding::Char,
+        's' => Encoding::Short,
+        'i' => Encoding::Int,
+        'l' => Encoding::Long,
+        'q' => Encoding::LongLong,
+        'C' => Encoding::UChar,
+        'S' => Encoding::UShort,
+        'I' => Encoding::UInt,
+        'L' => Encoding::ULong,
+        'Q' => Encoding::ULongLong,
+        'f' => Encoding::Float,
+        'd' => Encoding::Double,
+        'B' => Encoding::Bool,
+        'v' => Encoding::Void,
+        '*' => Encoding::String,
+        '@' => {
+            // Special handling for blocks
+            if t.starts_with('?') {
+                return Some((EncodingToken::Primitive(Encoding::Block), &t[1..]));
+            }
+            Encoding::Object
+        }
+        '#' => Encoding::Class,
+        ':' => Encoding::Sel,
+        '?' => Encoding::Unknown,
+        'b' => {
+            return chomp_int(t).map(|(b, t)| {
+                (EncodingToken::Primitive(Encoding::BitField(b)), t)
+            });
+        }
+        '^' => return Some((EncodingToken::Pointer, t)),
+        '[' => {
+            return chomp_int(t).map(|(n, t)| {
+                (EncodingToken::ArrayStart(n), t)
+            });
+        }
+        ']' => return Some((EncodingToken::ArrayEnd, t)),
+        '{' => {
+            return t.find('=').map(|i| {
+                (EncodingToken::StructStart(&t[..i]), &t[i+1..])
+            });
+        }
+        '}' => return Some((EncodingToken::StructEnd, t)),
+        '(' => {
+            return t.find('=').map(|i| {
+                (EncodingToken::UnionStart(&t[..i]), &t[i+1..])
+            });
+        }
+        ')' => return Some((EncodingToken::UnionEnd, t)),
+        _ => return None,
+    };
+    Some((EncodingToken::Primitive(primitive), t))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
