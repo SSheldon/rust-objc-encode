@@ -12,6 +12,14 @@ pub unsafe trait Encode {
     const ENCODING: Encoding<'static>;
 }
 
+unsafe impl<'a, T> Encode for &'a T where T: Encode {
+    default const ENCODING: Encoding<'static> = Encoding::Pointer(&T::ENCODING);
+}
+
+unsafe impl<'a, T> Encode for &'a mut T where T: Encode {
+    default const ENCODING: Encoding<'static> = Encoding::Pointer(&T::ENCODING);
+}
+
 macro_rules! encode_impls {
     ($($t:ty : $e:ident,)*) => ($(
         unsafe impl Encode for $t {
@@ -87,11 +95,11 @@ As a workaround, we provide implementations for these types that return the
 same encoding as references.
 */
 unsafe impl<T> Encode for *const T where for<'b> &'b T: Encode {
-    const ENCODING: Encoding<'static> = <&T>::ENCODING;
+    default const ENCODING: Encoding<'static> = <&T>::ENCODING;
 }
 
 unsafe impl<T> Encode for *mut T where for<'b> &'b mut T: Encode {
-    const ENCODING: Encoding<'static> = <&mut T>::ENCODING;
+    default const ENCODING: Encoding<'static> = <&mut T>::ENCODING;
 }
 
 unsafe impl<'a, T> Encode for Option<&'a T> where for<'b> &'b T: Encode {

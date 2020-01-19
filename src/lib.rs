@@ -43,6 +43,8 @@ assert_eq!(i32::ENCODING.to_string(), "i");
 
 #![no_std]
 
+#![feature(specialization)]
+
 #[cfg(test)]
 extern crate std;
 
