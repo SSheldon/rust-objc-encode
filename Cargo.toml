@@ -1,6 +1,6 @@
 [package]
 name = "objc-encode"
-version = "1.1.0"
+version = "1.1.0" # Remember to update html_root_url in lib.rs
 authors = ["Steven Sheldon"]
 edition = "2018"
 
@@ -9,7 +9,7 @@ keywords = ["objective-c", "osx", "ios", "cocoa", "uikit"]
 categories = ["development-tools::ffi", "no-std"]
 readme = "README.md"
 repository = "http://github.com/SSheldon/rust-objc-encode"
-documentation = "http://ssheldon.github.io/rust-objc/objc_encode/"
+documentation = "https://docs.rs/objc-encode/"
 license = "MIT"
 
 exclude = [
