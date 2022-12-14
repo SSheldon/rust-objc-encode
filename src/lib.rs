@@ -42,13 +42,12 @@ assert_eq!(i32::ENCODING.to_string(), "i");
 */
 
 #![no_std]
-
+#![feature(fmt_internals)]
 #[cfg(test)]
 extern crate std;
 
 mod encoding;
 mod encode;
-mod parse;
 
 pub use crate::encoding::Encoding;
 pub use crate::encode::Encode;

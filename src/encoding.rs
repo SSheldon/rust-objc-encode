@@ -1,6 +1,7 @@
 use core::fmt;
 
-use crate::parse;
+extern crate alloc;
+use alloc::string::String;
 
 /// An Objective-C type encoding.
 ///
@@ -33,6 +34,17 @@ pub enum Encoding<'a> {
     Array(u32, &'a Encoding<'a>),
     Struct(&'a str, &'a [Encoding<'a>]),
     Union(&'a str, &'a [Encoding<'a>]),
+}
+
+impl Encoding<'_> {
+    fn to_string(&self) -> String {
+        let mut buf = String::new();
+        let mut formatter = fmt::Formatter::new(&mut buf);
+        // Bypass format_args!() to avoid write_str with zero-length strs
+        fmt::Display::fmt(self, &mut formatter)
+            .expect("a Display implementation returned an error unexpectedly");
+        buf
+    }
 }
 
 impl fmt::Display for Encoding<'_> {
@@ -89,19 +101,18 @@ impl fmt::Display for Encoding<'_> {
 
 impl PartialEq<str> for Encoding<'_> {
     fn eq(&self, other: &str) -> bool {
-        parse::eq_enc(other, self)
+        self.to_string() == other
     }
 }
 
 impl PartialEq<Encoding<'_>> for str {
     fn eq(&self, other: &Encoding) -> bool {
-        parse::eq_enc(self, other)
+        self == other.to_string()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::string::ToString;
     use super::Encoding;
 
     #[test]
